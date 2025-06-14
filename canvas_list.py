@@ -17,7 +17,7 @@ def load_conversations(path):
 
 
 def extract_canvas(conversations):
-    canvases = []
+    canvases = {}
     for conv in conversations:
         chat_title = conv.get('title') or conv.get('id')
         mapping = conv.get('mapping', {})
@@ -34,6 +34,7 @@ def extract_canvas(conversations):
             if isinstance(canvas_list, dict):
                 canvas_list = [canvas_list]
             for c in canvas_list:
+                cid = c.get('id') or c.get('canvas_id')
                 name = c.get('name') or 'Untitled'
                 ctype = c.get('object_type') or c.get('type')
                 ts = c.get('create_time') or c.get('update_time')
@@ -41,8 +42,11 @@ def extract_canvas(conversations):
                     date = datetime.datetime.fromtimestamp(ts).strftime('%Y-%m-%d %H:%M:%S')
                 else:
                     date = ''
-                canvases.append({'name': name, 'type': ctype, 'date': date, 'chat': chat_title})
-    return canvases
+                key = (chat_title, cid or name)
+                item = canvases.get(key)
+                if not item or (date and date > item['date']):
+                    canvases[key] = {'name': name, 'type': ctype, 'date': date, 'chat': chat_title}
+    return list(canvases.values())
 
 
 def main():
